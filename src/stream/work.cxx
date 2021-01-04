@@ -8,8 +8,10 @@
 /*! */
 /*----------------------------------------------------------------------------*/
 void vcuda::driver::Stream::add_work(const unit &su) {
-  if (-1 == sem_wait(in_empty))
-    throw "could not wait for stream.in_empty";
+  // wait until there is some room in the queue
+  in_q_cv.wait(in_q_lock, [&]() {
+    return VCUDA_STREAM_MAX_NUM_WORK != in_q.size();
+  });
 
   // enqueue next unit of work
   in_q.push(su);

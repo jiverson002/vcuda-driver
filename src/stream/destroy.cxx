@@ -21,8 +21,8 @@ vcuda::driver::Stream::destroy(void) {
     } catch (const std::system_error& e) {
       return CUDA_ERROR;
     }
-    *log << "|  `- unlinking semaphores..." << std::endl;
 
+    *log << "|  `- unlinking semaphores..." << std::endl;
     if (0 != sem_unlink(in_fill_fname))
       return CUDA_ERROR;
     *log << "|     |- " << in_fill_fname << "...done" << std::endl;

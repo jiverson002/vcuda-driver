@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <cstring>
 #include <ostream>
+#include <mutex>
+#include <condition_variable>
 #include <thread>
 #include <queue>
 
@@ -87,15 +89,15 @@ namespace vcuda {
             friend class Stream;
         };
 
-        Stream(std::size_t streamnum, std::ostream *log);
-        Stream(Stream &&other);
+        Stream(std::size_t, std::ostream *);
+        Stream(Stream &&);
 
         ~Stream(void);
 
-        Stream & operator=(Stream &&other);
+        Stream & operator=(Stream &&);
 
         void run(void);
-        void start() { thread = std::thread(&Stream::run, this); }
+        void start(void) { thread = std::thread(&Stream::run, this); }
 
         CUresult launchKernel(unit& su);
         CUresult synchronize(void);
@@ -117,12 +119,17 @@ namespace vcuda {
 
       private:
         std::size_t id;       /*!< the stream id */
-        std::atomic<bool> on; /*!< indicator variable that device has been powered
-                                   on (true) or off (false) */
+        std::atomic<bool> on; /*!< indicator variable that device has been
+                                   powered on (true) or off (false) */
         char in_empty_fname[64];  /*!< file name of in_empty semaphore */
         char in_fill_fname[64];   /*!< file name of in_fill semaphore */
         char out_empty_fname[64]; /*!< file name of out_empty semaphore */
         char out_fill_fname[64];  /*!< file name of out_fill semaphore */
+
+        std::mutex work_mtx;
+
+        std::mutex in_q_mtx;
+        std::condition_variable in_q_cv;
 
         std::ostream *log;
 

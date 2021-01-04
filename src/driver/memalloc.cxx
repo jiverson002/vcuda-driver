@@ -25,6 +25,8 @@ vcuda::driver::Driver::memAlloc(CUdeviceptr *dptr, std::size_t bytesize) {
   // record reference to the stream #0
   Stream &stream = streams[0];
 
+  std::cerr << "stream#0: adding work (memAlloc)" << std::endl;
+
   // add the stream unit to the work queue of stream #hstream
   try {
     stream.add_work(Stream::unit( devices[adev]

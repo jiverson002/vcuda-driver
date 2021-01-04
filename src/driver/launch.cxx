@@ -34,6 +34,9 @@ vcuda::driver::Driver::launchKernel(
   if (stream == streams.end())
     return CUDA_ERROR_INVALID_VALUE;
 
+  std::cerr << "stream#" << (*stream).get_id() << ": adding work (launchKernel)"
+            << std::endl;
+
   // add a unit to the work queue of stream #hstream
   try {
     (*stream).add_work(Stream::unit( devices[adev]
