@@ -30,22 +30,24 @@ vcuda::driver::Driver::launchKernel(
     return CUDA_ERROR_INVALID_VALUE;
 
   // record reference to the stream #hstream
-  Stream &stream = streams[hstream];
+  const auto &stream = find(streams, hstream);
+  if (stream == streams.end())
+    return CUDA_ERROR_INVALID_VALUE;
 
   // add a unit to the work queue of stream #hstream
   try {
-    stream.add_work(Stream::unit( devices[adev]
-                                , &Device::launchKernel
-                                , f.argSize
-                                , (const void**)kernelParams
-                                , dim3(gridDimX, gridDimY, gridDimZ)
-                                , dim3(blockDimX, blockDimY, blockDimZ)
-                                , sharedMemBytes
-                                , f.fn
-                                , f.argc
-                                ));
+    (*stream).add_work(Stream::unit( devices[adev]
+                                   , &Device::launchKernel
+                                   , f.argSize
+                                   , (const void**)kernelParams
+                                   , dim3(gridDimX, gridDimY, gridDimZ)
+                                   , dim3(blockDimX, blockDimY, blockDimZ)
+                                   , sharedMemBytes
+                                   , f.fn
+                                   , f.argc
+                                   ));
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     return CUDA_ERROR_LAUNCH_FAILED;
   }
 

@@ -37,7 +37,7 @@ vcuda::driver::Driver::memCpyDtoH(void *hptr, CUdeviceptr dptr, std::size_t num)
                                 , num
                                 ));
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 
@@ -49,7 +49,7 @@ vcuda::driver::Driver::memCpyDtoH(void *hptr, CUdeviceptr dptr, std::size_t num)
   try {
     res = stream.get_work().res;
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 
@@ -88,7 +88,7 @@ vcuda::driver::Driver::memCpyHtoD(CUdeviceptr dptr, const void *hptr, std::size_
                                 , num
                                 ));
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 
@@ -100,7 +100,7 @@ vcuda::driver::Driver::memCpyHtoD(CUdeviceptr dptr, const void *hptr, std::size_
   try {
     res = stream.get_work().res;
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 

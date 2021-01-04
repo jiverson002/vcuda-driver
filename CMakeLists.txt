@@ -29,9 +29,11 @@ target_sources(${PROJECT_NAME}
   PRIVATE src/driver/devicesynchronize.cxx src/driver/init.cxx
           src/driver/instance.cxx src/driver/launch.cxx src/driver/memalloc.cxx
           src/driver/memcpy.cxx src/driver/memfree.cxx src/driver/memset.cxx
+          src/driver/streamcreate.cxx src/driver/streamdestroy.cxx
           src/driver/streamsynchronize.cxx
-          src/stream/init.cxx src/stream/launch.cxx src/stream/panic.cxx
-          src/stream/run.cxx src/stream/synchronize.cxx src/stream/work.cxx
+          src/stream/destroy.cxx src/stream/init.cxx src/stream/launch.cxx
+          src/stream/panic.cxx src/stream/run.cxx src/stream/synchronize.cxx
+          src/stream/work.cxx
           # these are only included below so that they appear when using IDEs
           include/vcuda/driver.h include/vcuda/driver/stream.h)
 

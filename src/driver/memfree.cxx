@@ -34,7 +34,7 @@ vcuda::driver::Driver::memFree(CUdeviceptr dptr) {
                                 , dptr
                                 ));
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 
@@ -42,7 +42,7 @@ vcuda::driver::Driver::memFree(CUdeviceptr dptr) {
   try {
     res = stream.get_work().res;
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 

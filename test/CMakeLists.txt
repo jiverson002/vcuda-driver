@@ -33,7 +33,7 @@ FetchContent_MakeAvailable(googletest)
 add_executable(${PROJECT_NAME})
 
 target_sources(${PROJECT_NAME}
-  PRIVATE apptest.cxx canary.cxx memtest.cxx)
+  PRIVATE apptest.cxx canary.cxx memtest.cxx streamtest.cxx)
 
 target_compile_definitions(${PROJECT_NAME}
   PRIVATE ${LIBRARY_NAME}_NO_RUNTIME)

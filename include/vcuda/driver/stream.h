@@ -87,20 +87,24 @@ namespace vcuda {
             friend class Stream;
         };
 
-        Stream(int, std::ostream &log);
+        Stream(std::size_t streamnum, std::ostream *log);
         Stream(Stream &&other);
 
         ~Stream(void);
+
+        Stream & operator=(Stream &&other);
 
         void run(void);
         void start() { thread = std::thread(&Stream::run, this); }
 
         CUresult launchKernel(unit& su);
-
         CUresult synchronize(void);
+        CUresult destroy(void);
 
         void add_work(const unit &su);
         unit get_work(void);
+
+        inline std::size_t get_id(void) const { return id; }
 
         sem_t *in_empty;    /*!< TODO */
         sem_t *in_fill;     /*!< TODO */
@@ -111,8 +115,8 @@ namespace vcuda {
         std::queue<unit> in_q;   /*!< TODO */
         std::queue<unit> out_q;  /*!< TODO */
 
-        int id;               /*!< the stream id */
       private:
+        std::size_t id;       /*!< the stream id */
         std::atomic<bool> on; /*!< indicator variable that device has been powered
                                    on (true) or off (false) */
         char in_empty_fname[64];  /*!< file name of in_empty semaphore */
@@ -120,7 +124,7 @@ namespace vcuda {
         char out_empty_fname[64]; /*!< file name of out_empty semaphore */
         char out_fill_fname[64];  /*!< file name of out_fill semaphore */
 
-        std::ostream &log;
+        std::ostream *log;
 
         void panic(const char * const filename, const char * const funcname,
                    const int line);

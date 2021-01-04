@@ -12,8 +12,8 @@ void vcuda::driver::Stream::panic(const char * const filename,
                                   const int line)
 {
   if (on) {
-    std::fprintf(stderr, "PANIC: stream#%d: %s:%s@%d\n", id, filename, funcname,
-                 line);
+    std::fprintf(stderr, "PANIC: stream#%zu: %s:%s@%d\n", id, filename,
+                 funcname, line);
     std::fflush(stderr);
     std::abort();
   }

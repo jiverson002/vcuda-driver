@@ -14,27 +14,27 @@
 /*----------------------------------------------------------------------------*/
 /*! */
 /*----------------------------------------------------------------------------*/
-vcuda::driver::Stream::Stream(int streamnum, std::ostream &log)
+vcuda::driver::Stream::Stream(std::size_t streamnum, std::ostream *log)
   : thread(), id(streamnum), on(true), log(log)
 {
   // in_empty: create semaphore object name
   if (0 >= std::snprintf(in_empty_fname, sizeof(in_empty_fname),
-                         "/cu%d-s%d-ie", getpid(), streamnum))
+                         "/cu%d-s%zu-ie", getpid(), streamnum))
     GOTO(ERROR);
 
   // in_fill: create semaphore object name
   if (0 >= std::snprintf(in_fill_fname, sizeof(in_fill_fname),
-                         "/cu%d-s%d-if", getpid(), streamnum))
+                         "/cu%d-s%zu-if", getpid(), streamnum))
     GOTO(ERROR);
 
   // out_empty: create semaphore object name
   if (0 >= std::snprintf(out_empty_fname, sizeof(out_empty_fname),
-                         "/cu%d-s%d-oe", getpid(), streamnum))
+                         "/cu%d-s%zu-oe", getpid(), streamnum))
     GOTO(ERROR);
 
   // out_fill: create semaphore object name
   if (0 >= std::snprintf(out_fill_fname, sizeof(out_fill_fname),
-                         "/cu%d-s%d-of", getpid(), streamnum))
+                         "/cu%d-s%zu-of", getpid(), streamnum))
     GOTO(ERROR);
 
   // in_empty: open semaphore
@@ -106,27 +106,43 @@ vcuda::driver::Stream::Stream(Stream &&other)
 }
 
 /*----------------------------------------------------------------------------*/
+/*! This can only be called after calling destroy() on this. */
+/*----------------------------------------------------------------------------*/
+vcuda::driver::Stream& vcuda::driver::Stream::operator=(Stream &&other)
+{
+  const auto t_id = id;
+  const auto t_on = on.load();
+
+  in_empty = other.in_empty;
+  in_fill = other.in_fill;
+  out_empty = other.out_empty;
+  out_fill = other.out_fill;
+  thread = std::move(other.thread);
+  id = other.id;
+  on = other.on.load();
+  log = other.log;
+
+  std::memcpy(in_empty_fname, other.in_empty_fname, sizeof(other.in_empty_fname));
+  std::memcpy(in_fill_fname, other.in_fill_fname, sizeof(other.in_fill_fname));
+  std::memcpy(out_empty_fname, other.out_empty_fname, sizeof(other.out_empty_fname));
+  std::memcpy(out_fill_fname, other.out_fill_fname, sizeof(other.out_fill_fname));
+
+  // set other to a usable state
+  other.id = t_id;
+  other.on = t_on; // XXX: Not sure why this must be copied
+
+  return *this;
+}
+
+/*----------------------------------------------------------------------------*/
 /*! */
 /*----------------------------------------------------------------------------*/
 vcuda::driver::Stream::~Stream(void) {
-  log << "|- deconstructing stream#" << id << "..." << std::endl;
+  *log << "|- deconstructing stream#" << id << "..." << std::endl;
 
   // TODO: Should the stream be synchronized before being destroyed?
   //synchronize();
-  //log << "|  |- stream synchronize...done" << std::endl;
+  //*log << "|  |- stream synchronize...done" << std::endl;
 
-  try {
-    on = false;
-    (void)sem_post(in_fill);
-    (void)sem_post(out_empty);
-    thread.join();
-  } catch (const std::system_error& e) {
-    CUSTREAMPANIC();
-  }
-
-  (void)sem_unlink(in_fill_fname);
-  (void)sem_unlink(in_empty_fname);
-  (void)sem_unlink(out_fill_fname);
-  (void)sem_unlink(out_empty_fname);
-  log << "|  `- semaphore cleanup...done" << std::endl;
+  destroy();
 }

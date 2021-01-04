@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #ifndef VCUDA_DRIVER_H
 #define VCUDA_DRIVER_H 1
+#include <algorithm>
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
@@ -24,6 +25,11 @@
 /*----------------------------------------------------------------------------*/
 /*! */
 /*----------------------------------------------------------------------------*/
+#define VCUDA_MAX_NUM_STREAM 32
+
+/*----------------------------------------------------------------------------*/
+/*! */
+/*----------------------------------------------------------------------------*/
 #ifndef GOTO
 # define GOTO(lbl) do {\
   std::fprintf(stderr, "driver: failure in %s @ %s:%d\n", __FILE__, __func__,\
@@ -39,7 +45,7 @@ namespace vcuda {
   namespace driver {
     class Driver {
       public:
-        Driver(std::ostream &log = std::cerr);
+        Driver(std::ostream *log = &std::cerr);
         ~Driver();
 
         CUresult deviceSynchronize(void);
@@ -59,6 +65,8 @@ namespace vcuda {
         CUresult memCpyHtoD(CUdeviceptr, const void *, std::size_t);
         CUresult memFree(CUdeviceptr);
         CUresult memSet(CUdeviceptr, const int, std::size_t);
+        CUresult streamCreate(CUstream *, unsigned int);
+        CUresult streamDestroy(CUstream);
         CUresult streamSynchronize(CUstream);
 
       private:
@@ -67,18 +75,25 @@ namespace vcuda {
         std::vector<Device> devices;  /*!< list of devices */
         std::vector<Stream> streams;  /*!< list of streams */
 
-        std::ostream &log;            /*!< ostream for logging */
+        std::ostream *log;            /*!< ostream for logging */
 
         inline bool isDev(void)  { return id != getpid(); }
         inline bool isInit(void) { return devices.size(); }
 
-        template <typename T> inline
-        const char * argget(const char *buf, T& arg) {
+        template <typename T, typename U> inline typename T::iterator
+        find(T &cont, const U &id) {
+          return std::find_if(std::begin(cont), std::end(cont),
+            [&id] (const auto& e) { return e.get_id() == id; }
+          );
+        }
+
+        template <typename T> inline const char *
+        argget(const char *buf, T& arg) {
           std::memcpy(&arg, buf, sizeof(arg));
           return buf + sizeof(arg);
         }
-        template <typename T, typename... Args> inline
-        const char * argget(const char *buf, T& arg, Args&... args) {
+        template <typename T, typename... Args> inline const char *
+        argget(const char *buf, T& arg, Args&... args) {
           std::memcpy(&arg, buf, sizeof(arg));
           return argput(buf + sizeof(arg), args...);
         }
@@ -113,8 +128,10 @@ VCUDA_DRIVER_EXPORT CUresult cuLaunchKernel(CUfunction f,
 VCUDA_DRIVER_EXPORT CUresult cuMemAlloc(CUdeviceptr *dptr, std::size_t bytesize);
 VCUDA_DRIVER_EXPORT CUresult cuMemFree(CUdeviceptr dptr);
 VCUDA_DRIVER_EXPORT CUresult cuMemset(CUdeviceptr dptr, const int value, std::size_t num);
-VCUDA_DRIVER_EXPORT CUresult cuMemcpyDtoH(void *hptr, const CUdeviceptr dptr, std::size_t num);
 VCUDA_DRIVER_EXPORT CUresult cuMemcpyHtoD(CUdeviceptr dptr, const void *hptr, std::size_t num);
+VCUDA_DRIVER_EXPORT CUresult cuMemcpyDtoH(void *hptr, const CUdeviceptr dptr, std::size_t num);
+VCUDA_DRIVER_EXPORT CUresult cuStreamCreate(CUstream *phstream, unsigned int flags);
+VCUDA_DRIVER_EXPORT CUresult cuStreamDestroy(CUstream hstream);
 
 #ifdef __cplusplus
 }

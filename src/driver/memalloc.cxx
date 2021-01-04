@@ -34,7 +34,7 @@ vcuda::driver::Driver::memAlloc(CUdeviceptr *dptr, std::size_t bytesize) {
                                 , bytesize
                                 ));
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 
@@ -47,7 +47,7 @@ vcuda::driver::Driver::memAlloc(CUdeviceptr *dptr, std::size_t bytesize) {
 
     res = su.res;
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 

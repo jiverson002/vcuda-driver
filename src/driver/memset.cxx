@@ -38,7 +38,7 @@ vcuda::driver::Driver::memSet(CUdeviceptr dptr, const int value, std::size_t num
                                 , num
                                 ));
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 
@@ -46,7 +46,7 @@ vcuda::driver::Driver::memSet(CUdeviceptr dptr, const int value, std::size_t num
   try {
     res = stream.get_work().res;
   } catch (const char *e) {
-    log << "driver: " << e << std::endl;
+    *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 
