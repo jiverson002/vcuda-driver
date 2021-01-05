@@ -6,7 +6,7 @@
 /*----------------------------------------------------------------------------*/
 /*! */
 /*----------------------------------------------------------------------------*/
-CUresult
+VCUDA_DRIVER_EXPORT CUresult
 vcuda::driver::Driver::version(int *driverVersion) {
   if (NULL == driverVersion)
     return CUDA_ERROR_INVALID_VALUE;
