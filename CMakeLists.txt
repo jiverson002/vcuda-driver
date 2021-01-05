@@ -99,7 +99,8 @@ foreach(dep ${component_DEPS})
   # If not package was found, then install from source
   if(NOT ${dep}_FOUND)
     FetchContent_Declare(${library_NAME}-${dep}
-      GIT_REPOSITORY https://github.com/jiverson002/${library_NAME}-${dep}.git)
+      GIT_REPOSITORY https://github.com/jiverson002/${library_NAME}-${dep}.git
+      GIT_TAG        dev)
 
     FetchContent_MakeAvailable(${library_NAME}-${dep})
 
