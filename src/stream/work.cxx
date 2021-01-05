@@ -1,38 +1,40 @@
 // SPDX-License-Identifier: MIT
-#include <semaphore.h>
+#include <mutex>
 
 #include "vcuda/core.h"
 #include "vcuda/driver/stream.h"
 
 /*----------------------------------------------------------------------------*/
-/*! */
+/*! Must be called in possession of mtx. */
 /*----------------------------------------------------------------------------*/
 void vcuda::driver::Stream::add_work(const unit &su) {
-  // wait until there is some room in the queue
-  in_q_cv.wait(in_q_lock, [&]() {
-    return VCUDA_STREAM_MAX_NUM_WORK != in_q.size();
-  });
+  // acquire in_q lock
+  std::lock_guard<std::mutex> in_q_lock(in_q_mtx);
 
   // enqueue next unit of work
   in_q.push(su);
 
-  if (-1 == sem_post(in_fill))
-    throw "could not post to stream.in_fill";
+  // notify someone that work is ready
+  in_q_filled.notify_one();
 }
 
 /*----------------------------------------------------------------------------*/
-/*! */
+/*! Must be called in possession of mtx. */
 /*----------------------------------------------------------------------------*/
 vcuda::driver::Stream::unit vcuda::driver::Stream::get_work(void) {
-  if (-1 == sem_wait(out_fill))
-    throw "could not wait for stream.out_fill";
+  // acquire out_q lock -- for initial predicate check
+  std::unique_lock<std::mutex> out_q_lock(out_q_mtx);
+
+  // wait until there is some work to do
+  if (out_q.empty()) {
+    out_q_filled.wait(out_q_lock, [&]() {
+      return !out_q.empty();
+    });
+  }
 
   // extract next unit of completed work
   unit su(out_q.front());
   out_q.pop();
-
-  if (-1 == sem_post(out_empty))
-    throw "could not post to stream.out_empty";
 
   return su;
 }

@@ -90,14 +90,7 @@ namespace vcuda {
         };
 
         Stream(std::size_t, std::ostream *);
-        Stream(Stream &&);
-
         ~Stream(void);
-
-        Stream & operator=(Stream &&);
-
-        void run(void);
-        void start(void) { thread = std::thread(&Stream::run, this); }
 
         CUresult launchKernel(unit& su);
         CUresult synchronize(void);
@@ -106,32 +99,34 @@ namespace vcuda {
         void add_work(const unit &su);
         unit get_work(void);
 
+        inline void start(void) { thread = std::thread(&Stream::run, this); }
         inline std::size_t get_id(void) const { return id; }
+        inline std::lock_guard<std::mutex> lock(void) {
+          return std::lock_guard<std::mutex>(mtx);
+        }
 
-        sem_t *in_empty;    /*!< TODO */
-        sem_t *in_fill;     /*!< TODO */
-        sem_t *out_empty;   /*!< TODO */
-        sem_t *out_fill;    /*!< TODO */
-        std::thread thread; /*!< TODO */
+      private:
+        std::thread thread;      /*!< TODO */
 
         std::queue<unit> in_q;   /*!< TODO */
         std::queue<unit> out_q;  /*!< TODO */
 
-      private:
         std::size_t id;       /*!< the stream id */
         std::atomic<bool> on; /*!< indicator variable that device has been
                                    powered on (true) or off (false) */
-        char in_empty_fname[64];  /*!< file name of in_empty semaphore */
-        char in_fill_fname[64];   /*!< file name of in_fill semaphore */
-        char out_empty_fname[64]; /*!< file name of out_empty semaphore */
-        char out_fill_fname[64];  /*!< file name of out_fill semaphore */
 
+        std::mutex mtx;
+        std::mutex copy_mtx;
         std::mutex work_mtx;
-
         std::mutex in_q_mtx;
-        std::condition_variable in_q_cv;
+        std::condition_variable in_q_filled;
+        std::condition_variable in_q_flushed;
+        std::mutex out_q_mtx;
+        std::condition_variable out_q_filled;
 
         std::ostream *log;
+
+        void run(void);
 
         void panic(const char * const filename, const char * const funcname,
                    const int line);

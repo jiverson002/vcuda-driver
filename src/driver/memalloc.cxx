@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include <cstddef>
 #include <iostream>
+#include <mutex>
 #include <vector>
 
 #include "vcuda/core.h"
@@ -23,18 +24,21 @@ vcuda::driver::Driver::memAlloc(CUdeviceptr *dptr, std::size_t bytesize) {
     return res;
 
   // record reference to the stream #0
-  Stream &stream = streams[0];
+  const auto &stream = find(streams, static_cast<std::size_t>(0));
+  if (stream == streams.end())
+    return CUDA_ERROR_INVALID_VALUE;
 
-  std::cerr << "stream#0: adding work (memAlloc)" << std::endl;
+  // lock stream here
+  std::lock_guard<std::mutex> lock((*stream).lock());
 
   // add the stream unit to the work queue of stream #hstream
   try {
-    stream.add_work(Stream::unit( devices[adev]
-                                , &Device::memAlloc
-                                , std::vector<size_t>()
-                                , NULL
-                                , bytesize
-                                ));
+    (*stream).add_work(Stream::unit( devices[adev]
+                                   , &Device::memAlloc
+                                   , std::vector<size_t>()
+                                   , NULL
+                                   , bytesize
+                                   ));
   } catch (const char *e) {
     *log << "driver: " << e << std::endl;
     GOTO(ERROR);
@@ -42,7 +46,7 @@ vcuda::driver::Driver::memAlloc(CUdeviceptr *dptr, std::size_t bytesize) {
 
   // wait until the device has complete the work
   try {
-    Stream::unit su(stream.get_work());
+    Stream::unit su((*stream).get_work());
 
     // read results
     argget(su.args, *dptr);

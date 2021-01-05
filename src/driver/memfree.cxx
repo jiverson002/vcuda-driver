@@ -23,18 +23,21 @@ vcuda::driver::Driver::memFree(CUdeviceptr dptr) {
     return res;
 
   // record reference to the stream #0
-  Stream &stream = streams[0];
+  const auto &stream = find(streams, static_cast<std::size_t>(0));
+  if (stream == streams.end())
+    return CUDA_ERROR_INVALID_VALUE;
 
-  std::cerr << "stream#0: adding work (memFree)" << std::endl;
+  // lock stream here
+  std::lock_guard<std::mutex> lock((*stream).lock());
 
   // add the stream unit to the work queue of stream #hstream
   try {
-    stream.add_work(Stream::unit( devices[adev]
-                                , &Device::memFree
-                                , std::vector<size_t>()
-                                , NULL
-                                , dptr
-                                ));
+    (*stream).add_work(Stream::unit( devices[adev]
+                                   , &Device::memFree
+                                   , std::vector<size_t>()
+                                   , NULL
+                                   , dptr
+                                   ));
   } catch (const char *e) {
     *log << "driver: " << e << std::endl;
     GOTO(ERROR);
@@ -42,7 +45,7 @@ vcuda::driver::Driver::memFree(CUdeviceptr dptr) {
 
   // wait until the device has complete the work
   try {
-    res = stream.get_work().res;
+    res = (*stream).get_work().res;
   } catch (const char *e) {
     *log << "driver: " << e << std::endl;
     GOTO(ERROR);

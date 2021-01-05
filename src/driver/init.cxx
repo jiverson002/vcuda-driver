@@ -14,13 +14,12 @@
 vcuda::driver::Driver::Driver(std::ostream *log) : adev(0), log(log) {
   id = getpid();
 
-  /* XXX: Ensure that the vectors are not reallocated, thus copy
+  /* XXX: Ensure that the device vector is not reallocated, thus copy
    *      constructing new objects and destructing old ones. */
   try {
     devices.reserve(VCUDA_NUM_DEVICE);
-    streams.reserve(VCUDA_MAX_NUM_STREAM);
   } catch (const std::bad_alloc &ba) {
-    std::cerr << ba.what() << std::endl;
+    *log << ba.what() << std::endl;
     GOTO(ERROR);
   }
 

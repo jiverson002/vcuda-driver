@@ -2,8 +2,6 @@
 #include <iostream>
 #include <mutex>
 
-#include <semaphore.h>
-
 #include "vcuda/driver/stream.h"
 
 /*----------------------------------------------------------------------------*/
@@ -11,12 +9,12 @@
 /*----------------------------------------------------------------------------*/
 void vcuda::driver::Stream::run(void) {
   while (on) {
-    // acquire queue lock -- for initial predicate check
+    // acquire in_q lock -- for initial predicate check
     std::unique_lock<std::mutex> in_q_lock(in_q_mtx);
 
     // wait until there is some work to do
-    in_q_cv.wait(in_q_lock, [&]() {
-      return !in_q.empty();
+    in_q_filled.wait(in_q_lock, [&]() {
+      return !on || !in_q.empty();
     });
 
     // check to see if the stream has been destroyed
@@ -27,7 +25,13 @@ void vcuda::driver::Stream::run(void) {
     unit su(in_q.front());
     in_q.pop();
 
-    // release in_q_lock
+    // notify someone if the in_q is flushed
+    in_q_flushed.notify_one();
+
+    // acquire work lock
+    std::unique_lock<std::mutex> work_lock(work_mtx);
+
+    // release in_q lock
     in_q_lock.unlock();
 
     /*------------------------------------------------------------------------*/
@@ -41,13 +45,11 @@ void vcuda::driver::Stream::run(void) {
     /* !! Next unit of work has been dispatched to the device. !! */
     /*------------------------------------------------------------------------*/
 
-    // acquire queue lock -- for initial predicate check
+    // acquire out_q lock
     std::unique_lock<std::mutex> out_q_lock(out_q_mtx);
 
-    // wait until there is some work to do
-    out_q_cv.wait(out_q_lock, [&]() {
-      return VCUDA_MAX_NUM_WORK != out_q.size();
-    });
+    // release work lock
+    work_lock.unlock();
 
     // check to see if the stream has been destroyed
     if (!on)
@@ -56,7 +58,10 @@ void vcuda::driver::Stream::run(void) {
     // push next unit of completed work
     out_q.push(su);
 
-    // release out_q_lock
+    // notify someone that the out_q has been filled
+    out_q_filled.notify_one();
+
+    // release out_q lock
     out_q_lock.unlock();
 
     /*------------------------------------------------------------------------*/

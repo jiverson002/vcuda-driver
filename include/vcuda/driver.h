@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <list>
 #include <ostream>
 #include <streambuf>
 #include <vector>
@@ -21,11 +22,6 @@
 /*! */
 /*----------------------------------------------------------------------------*/
 #define VCUDA_NUM_DEVICE 2
-
-/*----------------------------------------------------------------------------*/
-/*! */
-/*----------------------------------------------------------------------------*/
-#define VCUDA_MAX_NUM_STREAM 32
 
 /*----------------------------------------------------------------------------*/
 /*! */
@@ -70,10 +66,10 @@ namespace vcuda {
         CUresult streamSynchronize(CUstream);
 
       private:
-        pid_t id;                     /*!< process id of the driver */
-        int adev;                     /*!< active device identifier */
-        std::vector<Device> devices;  /*!< list of devices */
-        std::vector<Stream> streams;  /*!< list of streams */
+        pid_t id;                    /*!< process id of the driver */
+        int adev;                    /*!< active device identifier */
+        std::vector<Device> devices; /*!< list of devices */
+        std::list<Stream> streams;   /*!< list of streams */
 
         std::ostream *log;            /*!< ostream for logging */
 

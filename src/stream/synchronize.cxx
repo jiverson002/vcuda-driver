@@ -1,10 +1,5 @@
 // SPDX-License-Identifier: MIT
-#include <cerrno>
-#include <iostream>
 #include <mutex>
-
-#include <semaphore.h>
-#include <unistd.h>
 
 #include "vcuda/core.h"
 #include "vcuda/driver/stream.h"
@@ -14,66 +9,53 @@
 /*----------------------------------------------------------------------------*/
 CUresult
 vcuda::driver::Stream::synchronize(void) {
-  int ret;
   CUresult res = CUDA_SUCCESS;
 
-  std::unique_lock<std::mutex> work_lock;
+  // acquire stream lock
+  std::lock_guard<std::mutex> lock(mtx);
 
-  std::cerr << "driver: stream#" << id << ": flushing pending work queue"
-            << std::endl;
+  /*--------------------------------------------------------------------------*/
+  /* !! From this point forward, the size of in_q can only decrease, since no
+   *    other thread will be able to add to it as long as this thread holds
+   *    lock. !! */
+  /*--------------------------------------------------------------------------*/
 
-  // wait while the stream is flushed by the stream thread.
-  while (-1 != (ret = sem_trywait(in_fill))) {
-    if (-1 == sem_post(in_fill))
-      GOTO(ERROR);
+  // acquire in_q lock -- for initial predicate check
+  std::unique_lock<std::mutex> in_q_lock(in_q_mtx);
 
-    /* this is so that the driver thread does not repeatedly claim the in_fill
-     * semaphore */
-    if (-1 == usleep(10000) && EINTR != errno)
-      GOTO(ERROR);
+  // wait until in_q has been flushed
+  if (!in_q.empty()) {
+    in_q_flushed.wait(in_q_lock, [&]() {
+      return in_q.empty();
+    });
   }
-  if (-1 == ret && EAGAIN != errno)
-    GOTO(ERROR);
 
   /*--------------------------------------------------------------------------*/
-  /* !! At this point, the stream has been flushed, but the stream thread may
-   *    still be waiting for work on the device to complete. !! */
+  /* !! At this point, the pending work queue has been flushed, but the stream
+   *    thread may still be waiting for work on the device to complete. At most
+   *    there can be one outstanding job for the stream thread to wait on. !! */
   /*--------------------------------------------------------------------------*/
 
-  std::cerr << "driver: stream#" << id << ": waiting for outstanding work"
-            << std::endl;
+  // acquire work lock
+  std::unique_lock<std::mutex> work_lock(work_mtx);
 
-  // acquire work lock -- wait for any work on the device to complete
-  work_lock = std::unique_lock<std::mutex>(work_mtx);
-
-  // release work lock
-  work_lock.unlock();
-
-  std::cerr << "driver: stream#" << id << ": flushing completed work queue"
-            << std::endl;
+  // acquire out_q lock -- for initial predicate check
+  std::unique_lock<std::mutex> out_q_lock(out_q_mtx);
 
   // handle any completed work.
-  while (-1 != sem_trywait(out_fill)) {
-     // extract next unit of completed work
+  while (!out_q.empty()) {
+    // extract next unit of completed work
     res = out_q.front().res;
     out_q.pop();
 
     if (CUDA_SUCCESS != res) {
-      // TODO: handle error code from kernel launch
+      // FIXME: handle error code from kernel launch
     }
-
-    if (-1 == sem_post(out_empty))
-      GOTO(ERROR);
   }
-  if (-1 == ret && EAGAIN != errno)
-    GOTO(ERROR);
 
   /*--------------------------------------------------------------------------*/
   /* !! There is no work in stream's work queue. !! */
   /*--------------------------------------------------------------------------*/
 
   return res;
-
-  ERROR:
-  return CUDA_ERROR;
 }

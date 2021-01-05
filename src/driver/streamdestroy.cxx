@@ -20,11 +20,8 @@ vcuda::driver::Driver::streamDestroy(CUstream hstream) {
   CUresult res;
 
   // synchronize the stream
+  // TODO: Should the stream be synchronized before being destroyed?
   if (CUDA_SUCCESS != (res = (*stream).synchronize()))
-    return res;
-
-  // destroy the stream
-  if (CUDA_SUCCESS != (res = (*stream).destroy()))
     return res;
 
   // erase the stream
