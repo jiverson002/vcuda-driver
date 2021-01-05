@@ -69,5 +69,5 @@ void vcuda::driver::Stream::run(void) {
     /*------------------------------------------------------------------------*/
   }
 
-  *log << "|  |  `- thread cleanup...done" << std::endl;
+  *log << "|     `- thread cleanup...done" << std::endl;
 }
