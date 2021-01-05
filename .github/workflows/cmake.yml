@@ -4,7 +4,7 @@ on: push
 
 env:
   BUILD_TYPE: Release
-  CXX_STANDARD: 11
+  CXX_STANDARD: 17
 
 jobs:
   build:
