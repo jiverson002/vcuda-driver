@@ -64,6 +64,7 @@ namespace vcuda {
         CUresult streamCreate(CUstream *, unsigned int);
         CUresult streamDestroy(CUstream);
         CUresult streamSynchronize(CUstream);
+        CUresult version(int *);
 
       private:
         pid_t id;                    /*!< process id of the driver */

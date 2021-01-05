@@ -30,7 +30,7 @@ target_sources(${PROJECT_NAME}
           src/driver/instance.cxx src/driver/launch.cxx src/driver/memalloc.cxx
           src/driver/memcpy.cxx src/driver/memfree.cxx src/driver/memset.cxx
           src/driver/streamcreate.cxx src/driver/streamdestroy.cxx
-          src/driver/streamsynchronize.cxx
+          src/driver/streamsynchronize.cxx src/driver/version.cxx
           src/stream/destroy.cxx src/stream/init.cxx src/stream/launch.cxx
           src/stream/panic.cxx src/stream/run.cxx src/stream/synchronize.cxx
           src/stream/work.cxx
@@ -41,7 +41,8 @@ target_include_directories(${PROJECT_NAME}
   PUBLIC  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
           $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
           $<INSTALL_INTERFACE:include>
-  PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>)
+  PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
+          $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/include>)
 
 target_link_libraries(${PROJECT_NAME}
   PUBLIC Threads::Threads $<$<BOOL:${LIBRT}>:${LIBRT}>)
