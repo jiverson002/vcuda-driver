@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 #include <cstring>
 
+#include <semaphore.h>
+
 #include "vcuda/core.h"
-#include "vcuda/device.h"
-#include "vcuda/driver.h"
 #include "vcuda/driver/stream.h"
 
 /*----------------------------------------------------------------------------*/

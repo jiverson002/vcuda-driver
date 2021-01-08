@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: MIT
-#include <exception>
 #include <iostream>
-#include <new>
 
 #include <unistd.h>
 

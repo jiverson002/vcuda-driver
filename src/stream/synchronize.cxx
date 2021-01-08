@@ -32,7 +32,7 @@ vcuda::driver::Stream::synchronize(const std::scoped_lock<std::mutex> &lock) {
   /*--------------------------------------------------------------------------*/
 
   // acquire in_q lock -- for initial predicate check
-  std::unique_lock<std::mutex> in_q_lock(in_q_mtx);
+  std::unique_lock in_q_lock(in_q_mtx);
 
   // wait until in_q has been flushed
   if (!in_q.empty()) {
@@ -48,10 +48,10 @@ vcuda::driver::Stream::synchronize(const std::scoped_lock<std::mutex> &lock) {
   /*--------------------------------------------------------------------------*/
 
   // acquire work lock
-  std::unique_lock<std::mutex> work_lock(work_mtx);
+  std::unique_lock work_lock(work_mtx);
 
   // acquire out_q lock -- for initial predicate check
-  std::unique_lock<std::mutex> out_q_lock(out_q_mtx);
+  std::unique_lock out_q_lock(out_q_mtx);
 
   // handle any completed work.
   while (!out_q.empty()) {

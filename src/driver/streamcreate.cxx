@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
-#include <exception>
+#include <cassert>
 #include <iostream>
-#include <mutex>
 #include <new>
 #include <system_error>
 

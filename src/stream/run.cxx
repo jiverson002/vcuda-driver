@@ -10,7 +10,7 @@
 void vcuda::driver::Stream::run(void) {
   while (on) {
     // acquire in_q lock -- for initial predicate check
-    std::unique_lock<std::mutex> in_q_lock(in_q_mtx);
+    std::unique_lock in_q_lock(in_q_mtx);
 
     // wait until there is some work to do
     in_q_filled.wait(in_q_lock, [&]() {
@@ -29,7 +29,7 @@ void vcuda::driver::Stream::run(void) {
     in_q_flushed.notify_one();
 
     // acquire work lock
-    std::unique_lock<std::mutex> work_lock(work_mtx);
+    std::unique_lock work_lock(work_mtx);
 
     // release in_q lock
     in_q_lock.unlock();
@@ -46,7 +46,7 @@ void vcuda::driver::Stream::run(void) {
     /*------------------------------------------------------------------------*/
 
     // acquire out_q lock
-    std::unique_lock<std::mutex> out_q_lock(out_q_mtx);
+    std::unique_lock out_q_lock(out_q_mtx);
 
     // release work lock
     work_lock.unlock();

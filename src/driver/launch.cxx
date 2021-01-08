@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
+#include <cassert>
 #include <iostream>
-#include <shared_mutex>
 
 #include "vcuda/core.h"
 #include "vcuda/device.h"

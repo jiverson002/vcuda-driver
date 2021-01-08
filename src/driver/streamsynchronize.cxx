@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
-#include <shared_mutex>
+#include <cassert>
 
 #include "vcuda/core.h"
 #include "vcuda/driver.h"
-#include "vcuda/driver/stream.h"
 
 /*----------------------------------------------------------------------------*/
 /*! */
@@ -17,7 +16,7 @@ vcuda::driver::Driver::streamSynchronize(CUstream hstream) {
   const auto &[context, context_lock] = find_context(active_context);
   assert(context_lock);
 
-  // record reference to the stream #hstream
+  // find and lock the selected stream
   const auto &[stream, stream_lock] = context->find_stream(hstream);
   if (!stream_lock)
     return CUDA_ERROR_INVALID_VALUE;
