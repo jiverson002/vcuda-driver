@@ -26,7 +26,9 @@ add_library(${PROJECT_NAME})
 add_library(${Library_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_sources(${PROJECT_NAME}
-  PRIVATE src/driver/devicesynchronize.cxx src/driver/init.cxx
+  PRIVATE src/context/init.cxx src/context/streamcreate.cxx
+          src/context/streamdestroy.cxx src/context/synchronize.cxx
+          src/driver/devicesynchronize.cxx src/driver/init.cxx
           src/driver/instance.cxx src/driver/launch.cxx src/driver/memalloc.cxx
           src/driver/memcpy.cxx src/driver/memfree.cxx src/driver/memset.cxx
           src/driver/streamcreate.cxx src/driver/streamdestroy.cxx

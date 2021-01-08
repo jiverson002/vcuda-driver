@@ -8,11 +8,22 @@
 /*! */
 /*----------------------------------------------------------------------------*/
 CUresult
-vcuda::driver::Stream::synchronize(void) {
-  CUresult res = CUDA_SUCCESS;
+vcuda::driver::Stream::synchronize(
+  const std::optional<std::scoped_lock<std::mutex>> &lock
+)
+{
+  if (lock.has_value())
+    return synchronize(lock.value());
+  else
+    return synchronize(std::scoped_lock<std::mutex>(mtx));
+}
 
-  // acquire stream lock
-  std::lock_guard<std::mutex> lock(mtx);
+/*----------------------------------------------------------------------------*/
+/*! */
+/*----------------------------------------------------------------------------*/
+CUresult
+vcuda::driver::Stream::synchronize(const std::scoped_lock<std::mutex> &lock) {
+  CUresult res = CUDA_SUCCESS;
 
   /*--------------------------------------------------------------------------*/
   /* !! From this point forward, the size of in_q can only decrease, since no
@@ -58,4 +69,6 @@ vcuda::driver::Stream::synchronize(void) {
   /*--------------------------------------------------------------------------*/
 
   return res;
+
+  (void)lock;
 }

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 #include <exception>
 #include <iostream>
+#include <mutex>
 #include <new>
+#include <system_error>
 
 #include "vcuda/core.h"
 #include "vcuda/driver.h"
@@ -16,21 +18,18 @@ vcuda::driver::Driver::streamCreate(CUstream *phstream, unsigned int flags) {
   if (0 != flags)
     return CUDA_ERROR_INVALID_VALUE;
 
+  // find and lock the active context
+  const auto &[context, context_lock] = find_context(active_context);
+  assert(context_lock);
+
   try {
     // create a new stream
-    *phstream = streams.size(); // FIXME: need a better way to find next handle
-    streams.emplace_back(*phstream, log);
+    *phstream = context->streamCreate(flags);
   } catch (const std::bad_alloc &ba) {
     *log << ba.what() << std::endl;
     return CUDA_ERROR_OUT_OF_MEMORY;
-  }
-
-  try {
-    // start the thread to manage the new stream
-    streams.back().start();
-  } catch (const std::exception &e) {
-    *log << e.what() << std::endl;
-    streams.pop_back();
+  } catch (const std::system_error &se) {
+    *log << se.what() << std::endl;
     return CUDA_ERROR;
   }
 

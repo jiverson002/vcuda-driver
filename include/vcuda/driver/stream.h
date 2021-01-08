@@ -3,11 +3,13 @@
 #define VCUDA_DRIVER_STREAM_H 1
 #include <atomic>
 #include <cerrno>
+#include <condition_variable>
 #include <cstdio>
 #include <cstring>
-#include <ostream>
 #include <mutex>
-#include <condition_variable>
+#include <optional>
+#include <ostream>
+#include <string>
 #include <thread>
 #include <queue>
 
@@ -48,11 +50,11 @@ namespace vcuda {
             char args[4096];
 
             template <typename... Args>
-            unit(const Device &dev, device_fn cmd,
+            unit(device_fn cmd,
                  const std::vector<std::size_t>& size,
                  const void **vargs,
                  const Args&... args)
-              : dev(dev), cmd(cmd)
+              : cmd(cmd)
             {
               argsbytes = static_cast<decltype(argsbytes)>(
                 argputv(argput(this->args, args...), size, vargs) - this->args
@@ -82,18 +84,20 @@ namespace vcuda {
             }
 
           private:
-            const Device &dev;
             device_fn cmd;
             size_t argsbytes;
 
             friend class Stream;
         };
 
-        Stream(std::size_t, std::ostream *);
+        Stream(std::size_t, const Device &, std::ostream *, const std::string &);
         ~Stream(void);
 
         CUresult launchKernel(unit& su);
-        CUresult synchronize(void);
+        CUresult synchronize(
+          const std::optional<std::scoped_lock<std::mutex>> &lock = std::nullopt
+        );
+        CUresult synchronize(const std::scoped_lock<std::mutex> &lock);
         CUresult destroy(void);
 
         void add_work(const unit &su);
@@ -101,12 +105,12 @@ namespace vcuda {
 
         inline void start(void) { thread = std::thread(&Stream::run, this); }
         inline std::size_t get_id(void) const { return id; }
-        inline std::lock_guard<std::mutex> lock(void) {
-          return std::lock_guard<std::mutex>(mtx);
-        }
+        inline std::mutex& getMutex(void) { return mtx; }
 
       private:
         std::thread thread;      /*!< TODO */
+
+        const Device &device;    /*!< TODO */
 
         std::queue<unit> in_q;   /*!< TODO */
         std::queue<unit> out_q;  /*!< TODO */
@@ -124,6 +128,7 @@ namespace vcuda {
         std::mutex out_q_mtx;
         std::condition_variable out_q_filled;
 
+        std::string pfx;
         std::ostream *log;
 
         void run(void);

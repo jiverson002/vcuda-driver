@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include <iostream>
+#include <shared_mutex>
 
 #include "vcuda/core.h"
 #include "vcuda/device.h"
@@ -26,26 +27,27 @@ vcuda::driver::Driver::launchKernel(
 {
   if (!isInit())
     return CUDA_ERROR_NOT_INITIALIZED;
-  if (static_cast<decltype(streams.size())>(hstream) >= streams.size())
+
+  // find and lock the active context
+  const auto &[context, context_lock] = find_context(active_context);
+  assert(context_lock);
+
+  // find and lock the selected stream
+  const auto &[stream, stream_lock] = context->find_stream(hstream);
+  if (!stream_lock)
     return CUDA_ERROR_INVALID_VALUE;
 
-  // record reference to the stream #hstream
-  const auto &stream = find(streams, hstream);
-  if (stream == streams.end())
-    return CUDA_ERROR_INVALID_VALUE;
-
-  // add a unit to the work queue of stream #hstream
+  // add a work to the work queue of the selected stream
   try {
-    (*stream).add_work(Stream::unit( devices[adev]
-                                   , &Device::launchKernel
-                                   , f.argSize
-                                   , (const void**)kernelParams
-                                   , dim3(gridDimX, gridDimY, gridDimZ)
-                                   , dim3(blockDimX, blockDimY, blockDimZ)
-                                   , sharedMemBytes
-                                   , f.fn
-                                   , f.argc
-                                   ));
+    stream->add_work(Stream::unit( &Device::launchKernel
+                                 , f.argSize
+                                 , (const void**)kernelParams
+                                 , dim3(gridDimX, gridDimY, gridDimZ)
+                                 , dim3(blockDimX, blockDimY, blockDimZ)
+                                 , sharedMemBytes
+                                 , f.fn
+                                 , f.argc
+                                 ));
   } catch (const char *e) {
     *log << "driver: " << e << std::endl;
     return CUDA_ERROR_LAUNCH_FAILED;

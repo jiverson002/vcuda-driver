@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include <cstddef>
 #include <iostream>
-#include <mutex>
+#include <shared_mutex>
 #include <vector>
 
 #include "vcuda/core.h"
@@ -17,36 +17,35 @@ vcuda::driver::Driver::memAlloc(CUdeviceptr *dptr, std::size_t bytesize) {
   if (!isInit())
     return CUDA_ERROR_NOT_INITIALIZED;
 
-  CUresult res;
+  // find and lock the active context
+  const auto &[context, context_lock] = find_context(active_context);
+  assert(context_lock);
 
   // Synchronize the device
-  if (CUDA_SUCCESS != (res = deviceSynchronize()))
+  CUresult res = context->synchronize();
+  if (CUDA_SUCCESS != res)
     return res;
 
-  // record reference to the stream #0
-  const auto &stream = find(streams, static_cast<std::size_t>(0));
-  if (stream == streams.end())
+  // find and lock the default stream
+  const auto &[stream, stream_lock] = context->find_stream(default_stream);
+  if (!stream_lock)
     return CUDA_ERROR_INVALID_VALUE;
-
-  // lock stream here
-  std::lock_guard<std::mutex> lock((*stream).lock());
 
   // add the stream unit to the work queue of stream #hstream
   try {
-    (*stream).add_work(Stream::unit( devices[adev]
-                                   , &Device::memAlloc
-                                   , std::vector<size_t>()
-                                   , NULL
-                                   , bytesize
-                                   ));
+    stream->add_work(Stream::unit( &Device::memAlloc
+                                 , std::vector<size_t>()
+                                 , NULL
+                                 , bytesize
+                                 ));
   } catch (const char *e) {
     *log << "driver: " << e << std::endl;
     GOTO(ERROR);
   }
 
-  // wait until the device has complete the work
+  // wait until the device has completed the work
   try {
-    Stream::unit su((*stream).get_work());
+    Stream::unit su(stream->get_work());
 
     // read results
     argget(su.args, *dptr);

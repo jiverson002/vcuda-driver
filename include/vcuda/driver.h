@@ -7,14 +7,18 @@
 #include <cstring>
 #include <iostream>
 #include <list>
+#include <optional>
 #include <ostream>
+#include <shared_mutex>
 #include <streambuf>
+#include <utility>
 #include <vector>
 
 #include <sys/types.h>
 
 #include "vcuda/core.h"
 #include "vcuda/device.h"
+#include "vcuda/driver/context.h"
 #include "vcuda/driver/export.h"
 #include "vcuda/driver/stream.h"
 
@@ -67,21 +71,30 @@ namespace vcuda {
         CUresult version(int *);
 
       private:
-        pid_t id;                    /*!< process id of the driver */
-        int adev;                    /*!< active device identifier */
-        std::vector<Device> devices; /*!< list of devices */
-        std::list<Stream> streams;   /*!< list of streams */
+        pid_t id; /*!< process id of the driver */
 
-        std::ostream *log;            /*!< ostream for logging */
+        int active_context;       /*!< active context identifier */
+        CUstream default_stream;  /*!< default stream identifier */
+
+        std::list<Context> contexts; /*!< list of contexts */
+
+        std::ostream *log;           /*!< ostream for logging */
 
         inline bool isDev(void)  { return id != getpid(); }
-        inline bool isInit(void) { return devices.size(); }
+        inline bool isInit(void) { return contexts.size(); }
 
-        template <typename T, typename U> inline typename T::iterator
-        find(T &cont, const U &id) {
-          return std::find_if(std::begin(cont), std::end(cont),
-            [&id] (const auto& e) { return e.get_id() == id; }
-          );
+        inline auto
+        find_context(const decltype(contexts.front().getDevnum()) &devnum) {
+          const auto it = std::find_if(std::begin(contexts), std::end(contexts),
+                            [&devnum] (const auto& e) { return e.getDevnum() == devnum; }
+                          );
+          return it != std::end(contexts)
+                  ? std::pair<const typename std::list<Context>::iterator&,
+                              std::optional<std::scoped_lock<std::shared_mutex>>>
+                    { it, (*it).getMutex() }
+                  : std::pair<const typename std::list<Context>::iterator&,
+                              std::optional<std::scoped_lock<std::shared_mutex>>>
+                    { it, std::nullopt };
         }
 
         template <typename T> inline const char *
