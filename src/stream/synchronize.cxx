@@ -12,7 +12,7 @@ vcuda::driver::Stream::synchronize(
   const std::optional<std::scoped_lock<std::mutex>> &lock
 )
 {
-  if (lock.has_value())
+  if (lock)
     return synchronize(lock.value());
   else
     return synchronize(std::scoped_lock<std::mutex>(mtx));

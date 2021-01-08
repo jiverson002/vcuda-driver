@@ -43,4 +43,4 @@ jobs:
       - name: Test
         shell: bash
         working-directory: ${{runner.workspace}}/build
-        run: ctest -C $BUILD_TYPE
+        run: ctest --output-on-failure -C $BUILD_TYPE
