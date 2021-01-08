@@ -11,7 +11,9 @@
 /*----------------------------------------------------------------------------*/
 vcuda::driver::Stream::Stream(std::size_t streamnum, const Device &device,
                               std::ostream *log, const std::string &pfx)
-  : thread(), device(device), id(streamnum), on(true), pfx(pfx), log(log)
+  : thread(), device(device), id(streamnum), on(true), mtx(), copy_mtx(),
+    work_mtx(), in_q_mtx(), in_q_filled(), in_q_flushed(), out_q_mtx(),
+    out_q_filled(), pfx(pfx), log(log)
 {
 }
 

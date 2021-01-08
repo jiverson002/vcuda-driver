@@ -51,10 +51,10 @@ namespace vcuda {
                             [&id] (const auto& e) { return e.get_id() == id; }
                           );
           return it != std::end(streams)
-                  ? std::pair<const typename std::list<Stream>::iterator&,
+                  ? std::pair<const typename std::list<Stream>::iterator,
                               std::optional<std::scoped_lock<std::mutex>>>
                     { it, (*it).getMutex() }
-                  : std::pair<const typename std::list<Stream>::iterator&,
+                  : std::pair<const typename std::list<Stream>::iterator,
                               std::optional<std::scoped_lock<std::mutex>>>
                     { it, std::nullopt };
         }

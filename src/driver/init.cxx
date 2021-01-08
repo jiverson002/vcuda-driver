@@ -10,7 +10,7 @@
 /*! */
 /*----------------------------------------------------------------------------*/
 vcuda::driver::Driver::Driver(std::ostream *log)
-  : id(getpid()), active_context(0), default_stream(0), log(log)
+  : id(getpid()), active_context(0), default_stream(0), contexts(), log(log)
 {
   // initialize the predefined number of contexts (one for each device)
   try {

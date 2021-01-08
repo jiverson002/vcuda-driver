@@ -89,10 +89,10 @@ namespace vcuda {
                             [&devnum] (const auto& e) { return e.getDevnum() == devnum; }
                           );
           return it != std::end(contexts)
-                  ? std::pair<const typename std::list<Context>::iterator&,
+                  ? std::pair<const typename std::list<Context>::iterator,
                               std::optional<std::scoped_lock<std::shared_mutex>>>
                     { it, (*it).getMutex() }
-                  : std::pair<const typename std::list<Context>::iterator&,
+                  : std::pair<const typename std::list<Context>::iterator,
                               std::optional<std::scoped_lock<std::shared_mutex>>>
                     { it, std::nullopt };
         }
