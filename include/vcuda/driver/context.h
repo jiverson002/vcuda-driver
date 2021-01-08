@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #ifndef VCUDA_DRIVER_CONTEXT_H
 #define VCUDA_DRIVER_CONTEXT_H 1
+#include <algorithm>
 #include <list>
 #include <optional>
 #include <ostream>

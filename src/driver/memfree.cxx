@@ -33,11 +33,11 @@ vcuda::driver::Driver::memFree(CUdeviceptr dptr) {
 
   // add the stream unit to the work queue of stream #hstream
   try {
-    stream->add_work(Stream::unit( &Device::memFree
-                                 , std::vector<size_t>()
-                                 , NULL
-                                 , dptr
-                                 ));
+    stream->add_work({ &Device::memFree
+                     , std::vector<size_t>()
+                     , NULL
+                     , dptr
+                     });
   } catch (const char *e) {
     *log << "driver: " << e << std::endl;
     GOTO(ERROR);

@@ -39,15 +39,15 @@ vcuda::driver::Driver::launchKernel(
 
   // add a work to the work queue of the selected stream
   try {
-    stream->add_work(Stream::unit( &Device::launchKernel
-                                 , f.argSize
-                                 , (const void**)kernelParams
-                                 , dim3(gridDimX, gridDimY, gridDimZ)
-                                 , dim3(blockDimX, blockDimY, blockDimZ)
-                                 , sharedMemBytes
-                                 , f.fn
-                                 , f.argc
-                                 ));
+    stream->add_work({ &Device::launchKernel
+                     , f.argSize
+                     , (const void**)kernelParams
+                     , dim3(gridDimX, gridDimY, gridDimZ)
+                     , dim3(blockDimX, blockDimY, blockDimZ)
+                     , sharedMemBytes
+                     , f.fn
+                     , f.argc
+                     });
   } catch (const char *e) {
     *log << "driver: " << e << std::endl;
     return CUDA_ERROR_LAUNCH_FAILED;

@@ -33,13 +33,13 @@ vcuda::driver::Driver::memSet(CUdeviceptr dptr, const int value, std::size_t num
 
   // add the stream unit to the work queue of stream #0
   try {
-    stream->add_work(Stream::unit( &Device::memSet
-                                 , std::vector<size_t>()
-                                 , NULL
-                                 , dptr
-                                 , value
-                                 , num
-                                 ));
+    stream->add_work({ &Device::memSet
+                     , std::vector<size_t>()
+                     , NULL
+                     , dptr
+                     , value
+                     , num
+                     });
   } catch (const char *e) {
     *log << "driver: " << e << std::endl;
     GOTO(ERROR);

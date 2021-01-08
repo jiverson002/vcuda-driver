@@ -56,12 +56,11 @@ vcuda::driver::Stream::synchronize(const std::scoped_lock<std::mutex> &lock) {
   // handle any completed work.
   while (!out_q.empty()) {
     // extract next unit of completed work
-    res = out_q.front().res;
+    CUresult nres = out_q.front().res;
     out_q.pop();
 
-    if (CUDA_SUCCESS != res) {
-      // FIXME: handle error code from kernel launch
-    }
+    if (CUDA_SUCCESS != nres && CUDA_SUCCESS == res)
+      res = nres;
   }
 
   /*--------------------------------------------------------------------------*/

@@ -33,11 +33,11 @@ vcuda::driver::Driver::memAlloc(CUdeviceptr *dptr, std::size_t bytesize) {
 
   // add the stream unit to the work queue of stream #hstream
   try {
-    stream->add_work(Stream::unit( &Device::memAlloc
-                                 , std::vector<size_t>()
-                                 , NULL
-                                 , bytesize
-                                 ));
+    stream->add_work({ &Device::memAlloc
+                     , std::vector<size_t>()
+                     , NULL
+                     , bytesize
+                     });
   } catch (const char *e) {
     *log << "driver: " << e << std::endl;
     GOTO(ERROR);
