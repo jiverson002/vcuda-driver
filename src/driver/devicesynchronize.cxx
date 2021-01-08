@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+#include <cassert>
+
 #include "vcuda/core.h"
 #include "vcuda/driver.h"
 
